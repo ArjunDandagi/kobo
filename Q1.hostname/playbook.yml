@@ -1,0 +1,31 @@
+---
+# before running this , please ensure to install roles
+# ansible-galaxy install geerlingguy.docker gantsign.minikube githubxx.kubectl
+# First play is to use common roles to install  docker , minikube , kubectl
+# if you got these already installed comment the first play and let the second one run
+- hosts: localhost
+  roles:
+    - geerlingguy.docker
+    - gantsign.minikube
+    - githubixx.kubectl
+
+# checks if minikube is running if not starts it, which enables kubectl to switch to minikube cluster
+# creates a pod with hostname-printer , to view the output of pod
+# run the command : kubectl logs hostname-printer.
+- hosts: localhost
+  pre_tasks:
+    - name: Check Minikube's status.
+      command: minikube status
+      register: minikube_status
+      changed_when: false
+      ignore_errors: true
+    # Otherwise will start minikube
+    - name: Start Minikube if it's not running.
+      command: minikube start
+      when: "not minikube_status.stdout or 'Running' not in minikube_status.stdout"
+  tasks:
+    - name: create a pod that prints the hostname it is running in
+      command: kubectl create -f pod.yaml
+
+
+

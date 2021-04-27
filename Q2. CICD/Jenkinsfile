@@ -1,0 +1,39 @@
+pipeline {
+    agent any
+    stages {
+
+        stage('Checkout'){
+        steps {
+        checkout scm
+        }
+        }
+
+        stage('Build'){
+        steps {
+        sh '''mvn clean install''';
+        }
+
+        stage('Build Image'){
+        steps{
+        sh '''docker build -t arjundandagi/helloworld:`git describe --always`
+        '''
+        }
+
+        stage('push image'){
+        sh '''
+        docker push arjundandagi/helloworld:`git describe  --always`
+        '''
+        }
+
+        stage('deploy'){
+        sh '''
+        image=arjundandagi/helloworld:`git describe  --always`
+        sed -i -e 's/IMAGE/$image/g' deployment.yml
+        kubectl apply -f deployment.yml
+        '''
+        }
+        }
+
+     }
+    }
+}
